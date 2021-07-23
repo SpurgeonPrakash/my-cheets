@@ -1,0 +1,208 @@
+To show list of dbs:
+show dbs
+---------------------------------------------------------
+To Create DB and Use It:
+use shopDB
+---------------------------------------------------------
+To show collections
+show collections
+---------------------------------------------------------
+To delete database
+db.dropDatabase()
+
+To delete a Collection Withien Database Like (products that used below)
+db.products.drop()
+---------------------------------------------------------
+****************************CRUD********************************
+---------------------------------------------------------
+C -> Create
+To Insert Single(One) Record into a Collection(here products Collection) within DB -> insertOne() --> recieves a JSON Object
+db.products.insertOne({_id: 1, name: "Pen", price:1.20})
+db.products.insertOne({_id:2, name:"Pencil", price:0.80})
+
+To Insert Multiple(Many) Records into a Collection within DB -> insertMany() --> recieves an Array Which Contains Multiple JSON Objects
+db.products.insertMany([{_id: 1, name: "Pen", price:1.20},{_id:2, name:"Pencil", price:0.80}])
+---------------------------------------------------------
+R -> Read
+To retrieve or Query data from collections
+To Retrieve all records in Collection:
+db.products.find()
+
+To Retrieve All Records that Satisfiies the Single Condition
+db.products.find({name:"Pencil"})
+db.products.find({price: {$gt:1.0}})
+
+To Retrive All Records That Satisfies Multiple Conditions as Shown Below
+db.products.find({_id: 1},{name:1})
+db.products.find({_id: 1},{name:1, id:0})
+
+To Retrieve One Record That Satisfies the Given Condition
+db.products.findOne({stock:100}) -> Retrieves the First Record That Satisfies the Condition
+---------------------------------------------------------
+U -> Update
+To Update Collections data
+To Update Single(One) Record in a Collections(here products Collection) within DB -> updateOne() --> recieves two Parameters. 1.Filter(An Object) -> The Condition to find and Update the Collection, 2.Data(An Object with an Operator) -> Data to be Updated as Shown Below
+db.products.updateOne({_id:1},{$set: {stock:32}} --> Updates the First Document It Founds That Satisfies the Condition Specified Within Filter Object.
+db.product.updateOne({_id:2},{$set:{stock:12}}) --> Record --> {_id: 2,name:"Pencil", price:0.80, stock:12}
+
+To Update Multiple(Many) Records in a Collections(here products Collection) within DB -> updateMany() --> recieves a two Parameters. 1. An Empty Object With No filter Specified, 2. Data(An Object) That Needs To be Updated.
+db.product.updateMany({},{$set:{stock:100}}) --> Updates All The Records Within The Collection
+
+Note: ->updateOne() and updateMany() will not Override(replace) the entire JSON Record Within the Collection. i.e., the name attribute will be still exists and there will be no changes in it.
+      ->where As update will replace the entire JSon Record within the Collection. the name attribute will be not Presented Over Here.
+To Override the Entire Object: update() --> now the record will only contains the following. {_id:2,stock:100}
+db.product.update({_id:2},{stock:12})
+
+To Manually Replace Entire Object:
+db.products.replaceOne({_id:2},{stock: 1234, name: 'Pencil'}) --> {_id:2,stock: 1234, name: 'Pencil'}
+---------------------------------------------------------
+D -> Delete
+To Delete Collection data:
+To Delete Single(One) Record in a Collection From DB -> deleteOne() --> recieves an filter Object as Shown Below
+db.products.deleteOne({_id:2}) --> Deletes The First Record that Satisfies the Condition Specified In Filter Obect
+
+To Delete Multiple(Many) Records in a Collection From DB -> deleteMany() --> recieves an filter Object as Shown Below
+db.products.deleteMany({stock:2}) --> Deletes All the Records that Satisfies the Condition Specified In Filter Obect
+---------------------------------------------------------
+Adding Relationships to db
+db.products.insertOne(
+	{
+		_id:3, 
+		name:"rubber", 
+		price:0.6, 
+		stock:28, 
+		reviews:[
+			  {
+				author:"prakash",
+				rating:5,
+				comment:"Best Product Ever"
+			  },
+			  {
+				author:"spurgeon",
+				rating:5,
+				comment:"Very nice product"
+			   }
+		]
+	}
+)
+ db.products.insertOne({_id:2,name:"Pencil",price:0.8,stock:12,reviews:[{author:"sam",rating:5,comment:"Good Product"}]})
+
+---------------------------------------------------------------------
+
+Using Aggregate's $lookUp --> 
+
+show dbs
+admin   0.000GB
+config  0.000GB
+local   0.000GB
+
+> use shop
+switched to db shop
+
+> db.authors.insertMany([{name:"prakash",age:25,address:{street:"balarampuram"}},{name:"spurgeon",age:26,address:{street:"colony"}}])
+{
+        "acknowledged" : true,
+        "insertedIds" : [
+                ObjectId("5f5a9841f89a4b69553d2102"),
+                ObjectId("5f5a9841f89a4b69553d2103")
+        ]
+}
+
+db.authors.find().pretty()
+{
+        "_id" : ObjectId("5f5a9841f89a4b69553d2102"),
+        "name" : "prakash",
+        "age" : 25,
+        "address" : {
+                "street" : "balarampuram"
+        }
+}
+{
+        "_id" : ObjectId("5f5a9841f89a4b69553d2103"),
+        "name" : "spurgeon",
+        "age" : 26,
+        "address" : {
+                "street" : "colony"
+        }
+}
+
+> db.books.insertOne({name:"A Book", authors:[ObjectId("5f5a9841f89a4b69553d2102"),ObjectId("5f5a9841f89a4b69553d2103")]})
+{
+        "acknowledged" : true,
+        "insertedId" : ObjectId("5f5a990cf89a4b69553d2104")
+}
+
+> db.books.find().pretty()
+{
+        "_id" : ObjectId("5f5a990cf89a4b69553d2104"),
+        "name" : "A Book",
+        "authors" : [
+                ObjectId("5f5a9841f89a4b69553d2102"),
+                ObjectId("5f5a9841f89a4b69553d2103")
+        ]
+}
+
+In Below: from -> authors Collection, localField: authors attribute in books collection, foreignField: _id attribute in authors Collection.
+
+> db.books.aggregate([{$lookup: {from:"authors",localField:"authors",foreignField:"_id", as:"creators"}}]).pretty()
+{
+        "_id" : ObjectId("5f5a990cf89a4b69553d2104"),
+        "name" : "A Book",
+        "authors" : [
+                ObjectId("5f5a9841f89a4b69553d2102"),
+                ObjectId("5f5a9841f89a4b69553d2103")
+        ],
+        "creators" : [
+                {
+                        "_id" : ObjectId("5f5a9841f89a4b69553d2102"),
+                        "name" : "prakash",
+                        "age" : 25,
+                        "address" : {
+                                "street" : "balarampuram"
+                        }
+                },
+                {
+                        "_id" : ObjectId("5f5a9841f89a4b69553d2103"),
+                        "name" : "spurgeon",
+                        "age" : 26,
+                        "address" : {
+                                "street" : "colony"
+                        }
+                }
+        ]
+}
+
+// The above command will never change anything in database.
+
+> db.books.find().pretty()
+{
+        "_id" : ObjectId("5f5a990cf89a4b69553d2104"),
+        "name" : "A Book",
+        "authors" : [
+                ObjectId("5f5a9841f89a4b69553d2102"),
+                ObjectId("5f5a9841f89a4b69553d2103")
+        ]
+}
+
+---------------------------------------------------------------------
+Insert Operation:
+Client(Shell) --> MongoDB Server(mongod) ---> Mongod Server Contains Search Engine ---> When We Insert a Document --> Storage Engine Will Store Data in Memory(RAM) First and after some point of time it stores it in Disk(HardDisk).
+
+WriteConcern -> It Can Be used with any Insert Operation, Insert,insertOne,insertMany. By Default {writeConcern:{w:1}} -> It Means We are Concerned about Insert(Write) Operation and Wanted to be Acknowldged weather the write Operation was successfull or not.
+Journal -> Journal is like a bookKeeping or todoFile. Whick Keeps track of data that Storage Engine Uses to store in disk. If Suddenly network fails or Server Down(If Write Operation fails) Suddely before storage engine stores the data in disk. The data will be still presented in Journal where when the network was back, the storage engine can pickup data from journal and successfully complete the Write Operation. By default Journal is false or Undefined. {writeConcern:{w:1, j:false}}. 
+Making Write Concern 0 -> {writeConcern:{w:0}} -> We are Specifying that we are not concerned about successfull completion of write operation and We dont need any Acknowledgement back. Hence the operation will be faster. Since we are not bothering about response(Acknowledgement back) from server wether the write operation is successful or not.
+Making Journal True -> {writeConcern: {w:1, j: true}} -> It will be a bit slow because of the bookkeeping operations of journal before the data stored within the memory or disk. i.e., in Server first the data will be sent Storage Engine and from there the data will be first stored in journal and after that finally it will be store data in memory or disk.
+
+
+---------------------------------------------------------------------
+
+If You forgot to stop the mongodb server
+sudo pkill -f mongod
+
+---------------------------------------------------------------------
+
+To Start MongoDB Server ----> mongod
+To Start MongoDB CLI ----> mongo
+
+---------------------------------------------------------------------
+Topics To Be Remembered --> Projections, Embedded Documents & Arrays and Accessing Them!(Tip: No Need To loop the array to find a value to be checked in filter)

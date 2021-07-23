@@ -1,0 +1,59 @@
+CREATE table customers (id varchar(20), first_name STRING, last_name STRING, address varchar)
+
+INSERT into customers values (1,"Prakash","Tara","Balarampuram Colony")
+INSERT into customers values (2,"Spurgeon","Gnan","Sugar Factory")
+
+DELETE from customers where id = 2
+
+-----------------------------------------------------------------------------------------
+create table products (id varchar(20) NOT NULL, name STRING, price MONEY, PRIMARY KEY(id))
+
+INSERT into products values (1, "Pen", 1.20)
+INSERT into products (id,name) values (2,"Pencil")
+
+SELECT * FROM products
+SELECT name,price from "products"
+select * from products where id = 1
+
+UPDATE products set price = 1.8 where id=2
+UPDATE products set stock=32 where id = 1
+UPDATE products set stock=12 where id = 2
+
+ALTER table products add stock int
+
+DELETE from products where id = 2
+
+------------------------------------------------------------------------------------------
+
+create table orders (
+  id VARCHAR(10),
+  order_number INT,
+  customer_id int,
+  product_id Int,
+  primary key(id),
+  FOREIGN KEY(customer_id) references customers(id),
+  FOREIGN key (product_id) References products(id)
+)
+
+INSERT into orders values(1,4362,2,1)
+INSERT into orders values(2,3254,1,1)
+
+SELECT orders.order_number, customers.first_name, customers.last_name, customers.address
+FROM orders
+INNER JOIN customers
+ON orders.customer_id = customers.id;
+
+SELECT orders.order_number, products.name, products.price, products.stock
+FROM orders
+INNER JOIN products
+ON orders.product_id = products.id;
+
+------------------------------------------------------------------------------------------
+
+SELECT * FROM Customers
+WHERE Country='Germany' AND (City='Berlin' OR City='München');
+
+SELECT * FROM Customers
+ORDER BY Country DESC;
+
+
